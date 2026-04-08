@@ -1,0 +1,270 @@
+<% content_for :title, "Browse Packages - DragonRuby Forge" %>
+
+<div class="packages-container">
+  <header class="packages-header">
+    <h1>DragonRuby Forge Packages</h1>
+    <p class="subtitle">Discover reusable game components for DragonRuby</p>
+  </header>
+
+  <div class="packages-controls">
+    <form action="/" method="get" class="search-form">
+      <input
+        type="text"
+        name="search"
+        value="<%= params[:search] %>"
+        placeholder="Search packages..."
+        class="search-input"
+      >
+      <button type="submit" class="search-button">Search</button>
+      <% if params[:search].present? || params[:tag].present? %>
+        <a href="/" class="clear-filters">Clear</a>
+      <% end %>
+    </form>
+
+    <% if @all_tags.any? %>
+      <div class="tags-filter">
+        <span class="filter-label">Filter by tag:</span>
+        <div class="tags-list">
+          <a href="/" class="tag <%= params[:tag].blank? ? 'active' : '' %>">All</a>
+          <% @all_tags.each do |tag| %>
+            <a href="/?tag=<%= tag %>" class="tag <%= params[:tag] == tag ? 'active' : '' %>"><%= tag %></a>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <% if @packages.any? %>
+    <div class="packages-grid">
+      <% @packages.each do |package| %>
+        <a href="<%= package_path(package.name) %>" class="package-card">
+          <div class="package-header">
+            <h2 class="package-name"><%= package.name %></h2>
+            <span class="package-version">v<%= package.latest_version %></span>
+          </div>
+          <p class="package-description"><%= package.description %></p>
+          <div class="package-meta">
+            <span class="package-author">by <%= package.author %></span>
+          </div>
+          <% if package.tags.any? %>
+            <div class="package-tags">
+              <% package.tags.first(5).each do |tag| %>
+                <span class="tag-badge"><%= tag %></span>
+              <% end %>
+            </div>
+          <% end %>
+        </a>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="no-packages">
+      <p>No packages found.</p>
+      <% if params[:search].present? || params[:tag].present? %>
+        <a href="/" class="btn">Browse all packages</a>
+      <% end %>
+    </div>
+  <% end %>
+</div>
+
+<style>
+  .packages-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  .packages-header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  .packages-header h1 {
+    font-size: 2.5rem;
+    color: #1a1a2e;
+    margin-bottom: 0.5rem;
+  }
+
+  .subtitle {
+    color: #666;
+    font-size: 1.1rem;
+  }
+
+  .packages-controls {
+    margin-bottom: 2rem;
+  }
+
+  .search-form {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .search-input {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    transition: border-color 0.2s;
+  }
+
+  .search-input:focus {
+    outline: none;
+    border-color: #4a90d9;
+  }
+
+  .search-button {
+    padding: 0.75rem 1.5rem;
+    background: #4a90d9;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .search-button:hover {
+    background: #357abd;
+  }
+
+  .clear-filters {
+    padding: 0.75rem 1rem;
+    color: #666;
+    text-decoration: none;
+  }
+
+  .clear-filters:hover {
+    color: #333;
+  }
+
+  .tags-filter {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .filter-label {
+    font-weight: 500;
+    color: #333;
+  }
+
+  .tags-list {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .tag {
+    padding: 0.4rem 0.8rem;
+    background: #f0f0f0;
+    color: #333;
+    text-decoration: none;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    transition: all 0.2s;
+  }
+
+  .tag:hover {
+    background: #e0e0e0;
+  }
+
+  .tag.active {
+    background: #4a90d9;
+    color: white;
+  }
+
+  .packages-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .package-card {
+    display: block;
+    padding: 1.5rem;
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.2s;
+  }
+
+  .package-card:hover {
+    border-color: #4a90d9;
+    box-shadow: 0 4px 12px rgba(74, 144, 217, 0.15);
+    transform: translateY(-2px);
+  }
+
+  .package-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+  }
+
+  .package-name {
+    font-size: 1.25rem;
+    color: #1a1a2e;
+    margin: 0;
+  }
+
+  .package-version {
+    font-size: 0.875rem;
+    color: #666;
+    background: #f5f5f5;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+  }
+
+  .package-description {
+    color: #555;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .package-meta {
+    margin-bottom: 0.75rem;
+  }
+
+  .package-author {
+    font-size: 0.875rem;
+    color: #666;
+  }
+
+  .package-tags {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+  }
+
+  .tag-badge {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.5rem;
+    background: #e8f4fd;
+    color: #4a90d9;
+    border-radius: 4px;
+  }
+
+  .no-packages {
+    text-align: center;
+    padding: 3rem;
+    color: #666;
+  }
+
+  .no-packages .btn {
+    display: inline-block;
+    margin-top: 1rem;
+    padding: 0.75rem 1.5rem;
+    background: #4a90d9;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+  }
+</style>
