@@ -1,42 +1,24 @@
-# frozen_string_literal: true
-
-# Minimal JSON wrapper for DragonRuby.
+# Forge::JSON — JSON helpers for DragonRuby.
 #
-# DragonRuby's mruby runtime ships with `GTK.parse_json` and `GTK.parse_json_file`
-# for parsing, but has no built-in serializer. This module provides:
+# DragonRuby's mruby ships `GTK.parse_json` and `GTK.parse_json_file` for
+# parsing, but no serializer. This module wraps both and provides a small
+# pure-Ruby serializer for `Forge::JSON.generate` / `Forge::JSON.pretty`.
 #
-#   Forge::JSON.parse(string)     # uses GTK.parse_json
-#   Forge::JSON.parse_file(path)  # uses GTK.parse_json_file
-#   Forge::JSON.generate(obj)     # compact serializer for Hash/Array/String/
-#                                 #   Integer/Float/true/false/nil
-#   Forge::JSON.pretty(obj)       # 2-space indented variant
-#
-# Outside DragonRuby (e.g., tooling, tests on MRI) it falls back to the
-# stdlib `json` library so callers don't have to care which runtime they're in.
+#   Forge::JSON.parse(string)     # => Hash / Array / scalar
+#   Forge::JSON.parse_file(path)  # via GTK.parse_json_file
+#   Forge::JSON.generate(obj)     # compact
+#   Forge::JSON.pretty(obj)       # 2-space indented
 
 module Forge
   module JSON
-    DR_RUNTIME = defined?(GTK) && GTK.respond_to?(:parse_json)
-
     class << self
       def parse(string)
         return nil if string.nil? || string.empty?
-        if DR_RUNTIME
-          GTK.parse_json(string)
-        else
-          require "json" unless defined?(::JSON)
-          ::JSON.parse(string)
-        end
+        GTK.parse_json(string)
       end
 
       def parse_file(path)
-        if DR_RUNTIME && GTK.respond_to?(:parse_json_file)
-          GTK.parse_json_file(path)
-        elsif defined?(Forge::Fs)
-          parse(Forge::Fs.read(path))
-        else
-          parse(File.read(path))
-        end
+        GTK.parse_json_file(path)
       end
 
       def generate(obj)

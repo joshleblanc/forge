@@ -10,18 +10,6 @@
 #
 # All API calls use the user's API key from api_key.rb (generated on project download).
 
-# Stdlib requires only when running outside DragonRuby (e.g., tooling, tests).
-# DragonRuby's mruby runtime doesn't ship these — JSON is replaced by Forge::JSON
-# and HTTP by Forge::Http (which dispatches to GTK.http_get / GTK.http_post on
-# DragonRuby and Net::HTTP elsewhere).
-unless defined?(GTK)
-  # Zlib is used by the ZipReader to inflate DEFLATE entries on MRI. On
-  # DragonRuby (mruby) zlib is unavailable; the server is configured to
-  # serve STORED (uncompressed) archives, so the inflate path is never
-  # taken there.
-  require "zlib"
-end
-
 require_relative "utils/json"
 require_relative "utils/http"
 require_relative "utils/fs"
@@ -539,17 +527,10 @@ module Forge
         join_path(base_dir, "packages", name)
       end
 
-      # The project root.
-      #   - DragonRuby: paths passed to GTK.read_file / GTK.write_file are
-      #     interpreted relative to the game directory, so the prefix is empty.
-      #   - MRI: absolute path two levels up from this file (parent of app/)
-      #     so tooling can run from any working directory.
+      # The project root. Paths passed to GTK.read_file / GTK.write_file are
+      # interpreted relative to the game directory, so the prefix is empty.
       def base_dir
-        if Forge::Fs::DR_RUNTIME
-          ""
-        else
-          File.dirname(File.dirname(__FILE__))
-        end
+        ""
       end
 
       def lock_path
@@ -611,10 +592,8 @@ module Forge
         def self.open(data, &block)
           raise ArgumentError, "block required" unless block_given?
 
-          # On MRI, force binary encoding so String#[] is byte-indexed; mruby
-          # strings are byte-oriented natively and may lack String#force_encoding.
+          # mruby strings are byte-oriented; String#[] is byte-indexed.
           data = data.dup
-          data.force_encoding(Encoding::ASCII_8BIT) if data.respond_to?(:force_encoding) && defined?(Encoding)
           eocd = find_eocd(data)
           raise "Invalid ZIP: end-of-central-directory record not found" unless eocd
 
@@ -671,7 +650,8 @@ module Forge
           end
 
           def read
-            return @content if defined?(@content)
+            return @content if @cached
+            @cached = true
             return @content = "" if @name.end_with?("/")
 
             base = @local_offset
@@ -696,20 +676,10 @@ module Forge
 
           private
 
-          def inflate_raw(bytes)
-            unless defined?(Zlib)
-              raise PackageManager::Error,
-                    "Package archive uses DEFLATE compression but this runtime has no zlib. " \
-                    "Forge package archives must be served as STORED (uncompressed) zips on DragonRuby."
-            end
-            # ZIP uses raw deflate streams (no zlib wrapper) → negative window bits.
-            inflater = Zlib::Inflate.new(-Zlib::MAX_WBITS)
-            out = inflater.inflate(bytes)
-            out << inflater.finish if !inflater.finished?
-            inflater.close
-            out
-          rescue Zlib::Error
-            bytes
+          def inflate_raw(_bytes)
+            raise PackageManager::Error,
+                  "Package archive uses DEFLATE compression but DragonRuby has no zlib. " \
+                  "Forge package archives must be served as STORED (uncompressed) zips."
           end
         end
 
