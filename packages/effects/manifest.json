@@ -1,0 +1,11 @@
+{
+  "name": "effects",
+  "version": "1.0.0",
+  "description": "Animation, audio, and visual effects for DragonRuby. Sprite sheet animations, sound playback, particle-like effects, and screen shake.",
+  "dragonruby_version": ">= 3.0",
+  "dependencies": {},
+  "scripts": ["AnimationScript", "AudioScript"],
+  "widgets": [],
+  "tags": ["effects", "animation", "audio", "visual", "sprites"],
+  "author": "DragonRuby Forge"
+}

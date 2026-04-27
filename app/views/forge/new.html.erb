@@ -1,0 +1,170 @@
+<% content_for :title, "New Project — DragonRuby Forge" %>
+
+<style>
+  .new-project-page {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem;
+    text-align: center;
+  }
+
+  .hero-section {
+    margin-bottom: 3rem;
+  }
+
+  .hero-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #1a1a2e;
+    margin-bottom: 1rem;
+    line-height: 1.2;
+  }
+
+  .hero-subtitle {
+    font-size: 1.125rem;
+    color: #6b7280;
+    max-width: 500px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  .download-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 2.5rem;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+    margin-bottom: 2rem;
+  }
+
+  .forge-icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 1.5rem;
+    background: #1a1a2e;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+  }
+
+  .download-btn {
+    display: inline-block;
+    background: #4a90d9;
+    color: white;
+    padding: 0.875rem 2rem;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.2s;
+    border: none;
+    cursor: pointer;
+    margin-top: 1rem;
+  }
+
+  .download-btn:hover {
+    background: #357abd;
+  }
+
+  .feature-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    justify-content: center;
+    margin-top: 1.5rem;
+  }
+
+  .feature-tag {
+    background: #f3f4f6;
+    color: #374151;
+    padding: 0.375rem 0.875rem;
+    border-radius: 100px;
+    font-size: 0.8125rem;
+    font-weight: 500;
+  }
+
+  .note-text {
+    font-size: 0.8125rem;
+    color: #9ca3af;
+    margin-top: 1rem;
+  }
+
+  .divider {
+    border: none;
+    border-top: 1px solid #f3f4f6;
+    margin: 2rem 0;
+  }
+
+  .existing-project {
+    text-align: center;
+  }
+
+  .existing-project p {
+    color: #6b7280;
+    font-size: 0.9375rem;
+    margin-bottom: 1rem;
+  }
+
+  .browse-link {
+    color: #4a90d9;
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  .browse-link:hover {
+    text-decoration: underline;
+  }
+</style>
+
+<div class="new-project-page">
+  <div class="hero-section">
+    <h1 class="hero-title">Start building your<br>DragonRuby game</h1>
+    <p class="hero-subtitle">
+      Download the Forge base library. Open it in DragonRuby. Add packages.
+      No setup, no CLI — just code.
+    </p>
+  </div>
+
+  <div class="download-card">
+    <div class="forge-icon">&#9881;</div>
+
+    <% if logged_in? %>
+      <p style="color: #6b7280; font-size: 0.875rem; margin-bottom: 1rem;">
+        Signed in as <strong><%= current_user.username %></strong> — your API key will be linked to your account.
+      </p>
+    <% else %>
+      <p style="color: #6b7280; font-size: 0.875rem; margin-bottom: 1rem;">
+        Not signed in — you'll get an anonymous API key. You can
+        <%= link_to "register", register_path, style: "color: #4a90d9; text-decoration: none;" %>
+        later to enable publishing.
+      </p>
+    <% end %>
+
+    <a href="/new/download" class="download-btn">
+      Download Forge Base Library
+    </a>
+
+    <div class="feature-list">
+      <span class="feature-tag">Process & Entity system</span>
+      <span class="feature-tag">Script & Widget engine</span>
+      <span class="feature-tag">Physics helpers</span>
+      <span class="feature-tag">UI components</span>
+      <span class="feature-tag">Package manager</span>
+      <span class="feature-tag">API key included</span>
+    </div>
+
+    <p class="note-text">
+      Your API key is automatically generated and stored in <code>api_key.rb</code> — gitignored by default.
+    </p>
+  </div>
+
+  <hr class="divider">
+
+  <div class="existing-project">
+    <p>Already have a Forge project?</p>
+    <%= link_to "Browse packages to add to your project", packages_path, class: "browse-link" %>
+  </div>
+</div>

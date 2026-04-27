@@ -1,0 +1,8 @@
+# This file is generated when you download a project from forge.game.
+# Do not commit this file — it is automatically added to .gitignore.
+#
+# If you need a new API key, visit https://forge.game to download a new project.
+module Forge
+  API_KEY = "YOUR_API_KEY"
+  API_URL = "https://forge.game/api"
+end

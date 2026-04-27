@@ -78,9 +78,10 @@
     <section class="install-section">
       <h2>Installation</h2>
       <div class="install-command">
-        <code>forge install <%= @package.name %></code>
+        <code>Forge.add_package("<%= @package.name %>")</code>
       </div>
-      <p class="install-note">Make sure you have the Forge CLI installed.</p>
+      <p class="install-note">Paste this in your game or run it in the DragonRuby console.</p>
+      <button class="btn btn-primary copy-btn" onclick="copyInstallCommand()">Copy</button>
     </section>
 
     <% if @samples && @samples.any? %>
@@ -111,49 +112,23 @@
 
   <section class="code-section">
     <h2>Source Code</h2>
-    
+    <p class="code-description">Browse and read the full source code before installing.</p>
+
     <div class="code-browser">
       <div class="file-tree">
-        <h3>Files</h3>
-        <ul class="tree">
-          <li class="folder">
-            <span class="folder-icon">📁</span> <%= @package.name %>
-            <ul class="root-folder">
-              <li class="file active">
-                <span class="file-icon">📄</span> lib/<%= @package.name %>.rb
-              </li>
-              <li class="folder">
-                <span class="folder-icon">📁</span> scripts
-                <ul>
-                  <% @version.scripts&.each do |script| %>
-                    <li class="file">
-                      <span class="file-icon">📄</span> <%= script.underscore %>.rb
-                    </li>
-                  <% end %>
-                </ul>
-              </li>
-              <li class="folder">
-                <span class="folder-icon">📁</span> assets
-                <ul>
-                  <li class="folder">
-                    <span class="folder-icon">📁</span> sprites
-                  </li>
-                  <li class="folder">
-                    <span class="folder-icon">📁</span> audio
-                  </li>
-                </ul>
-              </li>
-            </ul>
-          </li>
-        </ul>
+        <%= turbo_frame_tag "file-tree", src: package_files_path(@package.name, version: @selected_version) do %>
+          <p>Loading files...</p>
+        <% end %>
       </div>
-      
+
       <div class="code-viewer">
-        <div class="code-header">
-          <span class="filename">lib/<%= @package.name %>.rb</span>
-          <span class="language">Ruby</span>
-        </div>
-        <pre class="code-content"><code><%= @version.source_code %></code></pre>
+        <%= turbo_frame_tag "file-content", src: package_file_content_path(@package.name, "manifest.json", version: @selected_version) do %>
+          <div class="code-header">
+            <span class="filename">manifest.json</span>
+            <span class="language">JSON</span>
+          </div>
+          <pre class="code-content"><code>Loading...</code></pre>
+        <% end %>
       </div>
     </div>
   </section>
@@ -490,20 +465,14 @@
     line-height: 1.6;
     overflow: auto;
     flex: 1;
-    white-space: pre;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
   }
 
   .code-content code {
     font-family: inherit;
+    display: block;
   }
-
-  /* Syntax highlighting */
-  .code-content .keyword { color: #cba6f7; }
-  .code-content .def { color: #89b4fa; }
-  .code-content .string { color: #a6e3a1; }
-  .code-content .number { color: #fab387; }
-  .code-content .comment { color: #6c7086; font-style: italic; }
-  .code-content .constant { color: #f9e2af; }
 
   .package-actions {
     margin-top: 2rem;
@@ -704,18 +673,64 @@
     border: none;
     background: #1a1a2e;
   }
+
+  /* File tree */
+  .file-link {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    color: #333;
+    text-decoration: none;
+    font-size: 0.875rem;
+  }
+  .file-link:hover { background: #e8e8e8; }
+  .file-link.active { background: #dbeafe; color: #2563eb; }
+  .file-icon { font-size: 0.9rem; }
+  .folder-label {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    cursor: pointer;
+    font-weight: 500;
+    user-select: none;
+    padding: 0.2rem 0;
+    font-size: 0.875rem;
+    color: #555;
+  }
+  .folder-arrow { font-size: 0.6rem; transition: transform 0.15s; }
+  .folder-contents { display: none; padding-left: 1rem; list-style: none; margin: 0; }
+  .folder.open > .folder-contents { display: block; }
+  .folder.open > .folder-label > .folder-arrow { transform: rotate(90deg); }
+  .file-tree ul { list-style: none; padding: 0; margin: 0; }
+  .file-tree li { padding: 0.1rem 0; }
+
+  /* Syntax highlighting */
+  .code-content .keyword { color: #cba6f7; }
+  .code-content .string { color: #a6e3a1; }
+  .code-content .number { color: #fab387; }
+  .code-content .comment { color: #6c7086; font-style: italic; }
+  .code-content .constant { color: #f9e2af; }
+  .code-content .symbol { color: #f5c2e7; }
+  .code-content .variable { color: #94e2d5; }
+  .code-content .def { color: #89b4fa; }
+  .code-content .class { color: #f9e2af; }
+  .code-content .json-key { color: #89b4fa; }
+  .code-content .json-string { color: #a6e3a1; }
+  .code-content .json-number { color: #fab387; }
+  .code-content .json-bool { color: #f38ba8; }
+  .code-content .json-null { color: #6c7086; }
+  .code-content .json-punct { color: #cdd6f4; }
+
+  /* Turbo frame loading */
+  turbo-frame:not([src]) .code-header,
+  turbo-frame[loading] { display: block; opacity: 0.6; }
 </style>
 
 <script>
-  // Simple folder toggle
-  document.querySelectorAll('.folder > span').forEach(span => {
-    span.addEventListener('click', function() {
-      this.parentElement.classList.toggle('open');
-    });
-  });
-
-  // Sample preview functionality
-  const packageName = '<%= @package.name %>';
+  // Sample preview functionality  // Sample preview functionality
+  const samplePackageName = '<%= @package.name %>';
   let currentBackendUrl = '<%= ENV["FORGE_BACKEND_URL"] || "http://localhost:3000" %>';
 
   function updateSamplePreview() {
@@ -735,7 +750,7 @@
 
     try {
       // Fetch sample main.rb content
-      const response = await fetch(`${currentBackendUrl}/api/packages/${packageName}/samples/${sampleName}`);
+      const response = await fetch(`${currentBackendUrl}/api/packages/${samplePackageName}/samples/${sampleName}`);
       const data = await response.json();
 
       if (data.error) {
@@ -745,7 +760,7 @@
 
       // For now, we'll show a message since we can't run DragonRuby in the browser
       // In the future, this would dynamically create a game structure
-      title.textContent = `${sampleName} - ${packageName}`;
+      title.textContent = `${sampleName} - ${samplePackageName}`;
 
       // Create a simple demo since we can't run actual DragonRuby
       // The actual implementation would use an embed like postcarts did
@@ -781,7 +796,7 @@
         <body>
           <h1>${sampleName}</h1>
           <p>This sample is available in the package. To run it:</p>
-          <code>forge install ${packageName}
+          <code>forge install ${samplePackageName}
 # Copy the sample to your project
 # Run: ./dragonruby .</code>
         </body>
@@ -797,3 +812,4 @@
     preview.style.display = 'none';
   }
 </script>
+

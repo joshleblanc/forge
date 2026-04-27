@@ -1,0 +1,11 @@
+{
+  "name": "health",
+  "version": "1.0.0",
+  "description": "Health tracking for game entities. Add damage, healing, invincibility frames, and death callbacks to any entity.",
+  "dragonruby_version": ">= 3.0",
+  "dependencies": {},
+  "scripts": ["HealthScript", "CollisionDamageScript", "PickupScript"],
+  "widgets": [],
+  "tags": ["health", "combat", "mechanics", "gameplay"],
+  "author": "DragonRuby Forge"
+}

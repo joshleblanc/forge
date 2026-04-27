@@ -1,0 +1,11 @@
+{
+  "name": "gameplay",
+  "version": "1.0.0",
+  "description": "Core gameplay systems: inventory management, quest tracking, save/load data, and prompts. Everything you need to build RPG-style mechanics.",
+  "dragonruby_version": ">= 3.0",
+  "dependencies": {},
+  "scripts": ["SaveDataScript", "QuestScript", "QuestManagerScript", "InventorySpecScript", "InventoryScript", "PromptScript"],
+  "widgets": [],
+  "tags": ["gameplay", "inventory", "quests", "rpg", "save", "persistence"],
+  "author": "DragonRuby Forge"
+}

@@ -1,0 +1,16 @@
+# Forge API key — generated per project download, do not commit
+api_key.rb
+
+# DragonRuby game files
+*.drp
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+.vscode/
+.idea/

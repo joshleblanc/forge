@@ -1,0 +1,49 @@
+<turbo-frame id="file-tree">
+<h3>Files</h3>
+<script>
+  document.querySelectorAll('.folder-label').forEach(label => {
+    label.addEventListener('click', function() {
+      this.closest('.folder').classList.toggle('open');
+    });
+  });
+</script>
+<% groups = @files.group_by { |f| f[:path].split("/").first == f[:path] ? "__root" : f[:path].split("/").first } %>
+<% group_order = ["__root", "manifest.json", "lib", "scripts", "widgets", "assets", "samples", "data"] %>
+<% sorted_groups = groups.keys.sort_by { |g| [group_order.index(g) || 99, g] } %>
+
+<ul class="tree">
+  <% sorted_groups.each do |group| %>
+    <% items = groups[group] %>
+    <% if group == "__root" %>
+      <% items.each do |f| %>
+        <% next if f[:path] == "manifest.json" %>
+        <% file_url = "/packages/#{@package.name}/files/#{f[:path]}?version=#{URI.encode_www_form_component(@selected_version)}" %>
+        <li>
+          <%= link_to file_url, data: { turbo_frame: "file-content" }, class: "file-link", title: f[:path] do %>
+            <span class="file-icon"><%= file_icon(f[:type]) %></span>
+            <%= f[:name] %>
+          <% end %>
+        </li>
+      <% end %>
+    <% else %>
+      <li class="folder">
+        <span class="folder-label">
+          <span class="folder-arrow">&#9658;</span>
+          <%= folder_icon(group) %> <%= group %>
+        </span>
+        <ul class="folder-contents">
+          <% items.sort_by { |f| [f[:path].count("/"), f[:name]] }.each do |f| %>
+            <% file_url = "/packages/#{@package.name}/files/#{f[:path]}?version=#{URI.encode_www_form_component(@selected_version)}" %>
+            <li>
+              <%= link_to file_url, data: { turbo_frame: "file-content" }, class: "file-link", title: f[:path] do %>
+                <span class="file-icon"><%= file_icon(f[:type]) %></span>
+                <%= f[:name] %>
+              <% end %>
+            </li>
+          <% end %>
+        </ul>
+      </li>
+    <% end %>
+  <% end %>
+</ul>
+</turbo-frame>

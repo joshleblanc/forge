@@ -1,0 +1,11 @@
+{
+  "name": "utilities",
+  "version": "1.0.0",
+  "description": "Utility scripts: floating labels, control toggling, dialogue prompts, and more. Small, focused scripts for common game patterns.",
+  "dragonruby_version": ">= 3.0",
+  "dependencies": {},
+  "scripts": ["LabelScript", "DisableControlsScript", "DialogueScript", "LootLockerCurrencyGiftScript"],
+  "widgets": [],
+  "tags": ["utility", "label", "dialogue", "controls", "ui"],
+  "author": "DragonRuby Forge"
+}

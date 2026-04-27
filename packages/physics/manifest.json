@@ -1,0 +1,11 @@
+{
+  "name": "physics",
+  "version": "1.0.0",
+  "description": "A simple 2D physics engine for DragonRuby. Provides Velocity, VelocityArray, and helper methods for movement, friction, and direction.",
+  "dragonruby_version": ">= 3.0",
+  "dependencies": {},
+  "scripts": [],
+  "widgets": [],
+  "tags": ["physics", "velocity", "movement", "engine"],
+  "author": "DragonRuby Forge"
+}

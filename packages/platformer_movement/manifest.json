@@ -1,0 +1,12 @@
+{
+  "name": "platformer_movement",
+  "version": "1.0.0",
+  "description": "Complete platformer movement system. Includes physics-based movement, gravity, variable jump height, and input handling for a polished platformer feel.",
+  "dragonruby_version": ">= 3.0",
+  "dependencies": {
+    "physics": ">= 1.0.0"
+  },
+  "scripts": [],
+  "tags": ["platformer", "movement", "physics", "gameplay", "controls"],
+  "author": "DragonRuby Forge"
+}

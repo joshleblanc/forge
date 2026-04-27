@@ -1,0 +1,11 @@
+{
+  "name": "ldtk_parser",
+  "version": "1.0.0",
+  "description": "Parse and use LDTK (LDtk) level editor files in DragonRuby. Supports levels, layers, entities, tilesets, and enums.",
+  "dragonruby_version": ">= 3.0",
+  "dependencies": {},
+  "scripts": ["LdtkLoaderScript"],
+  "widgets": [],
+  "tags": ["ldtk", "level-editor", "tilemap", "parser"],
+  "author": "DragonRuby Forge"
+}

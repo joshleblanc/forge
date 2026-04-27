@@ -1,0 +1,9 @@
+# frozen_string_literal: true
+
+source "https://rubygems.org"
+
+# DragonRuby runtime gems — these are provided by the DragonRuby runtime.
+# The gems below are for documentation/reference only and are not required
+# to be in the Gemfile for the game to run.
+
+# gem "gtk"   # provided by DragonRuby runtime

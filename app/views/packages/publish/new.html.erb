@@ -57,6 +57,30 @@
         <span class="hint">Categories that describe your package</span>
       </div>
 
+      <div class="form-group">
+        <%= f.label :widgets, "Widgets (comma separated)" %>
+        <%= f.text_field :widgets_text, placeholder: "HealthBar, InventoryWidget" %>
+        <span class="hint">Widget class names included in this package</span>
+      </div>
+
+      <div class="form-group">
+        <%= f.label :assets, "Assets (one per line)" %>
+        <%= f.text_area :assets_text, placeholder: "sprites/player.png%0Asprites/enemy.png", rows: 2 %>
+        <span class="hint">Asset paths included in this package</span>
+      </div>
+
+      <div class="form-group">
+        <%= f.label :samples, "Sample Games (comma separated)" %>
+        <%= f.text_field :samples_text, placeholder: "basic_demo, platformer_example" %>
+        <span class="hint">Names of sample projects users can try</span>
+      </div>
+
+      <div class="form-group">
+        <%= f.label :zip_upload, "Or Upload Package ZIP" %>
+        <%= file_field_tag :zip_upload, accept: ".zip", class: "file-input" %>
+        <span class="hint">Upload a pre-packaged ZIP with scripts, widgets, and assets</span>
+      </div>
+
       <%= f.submit "Publish Package", class: "btn btn-primary" %>
     <% end %>
   </div>
@@ -169,5 +193,17 @@
 
   .btn-primary:hover {
     background: #357abd;
+  }
+
+  .file-input {
+    padding: 0.75rem;
+    border: 2px dashed #e0e0e0;
+    border-radius: 8px;
+    width: 100%;
+    cursor: pointer;
+  }
+
+  .file-input:hover {
+    border-color: #4a90d9;
   }
 </style>

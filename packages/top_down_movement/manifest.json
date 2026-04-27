@@ -1,0 +1,10 @@
+{
+  "name": "top_down_movement",
+  "version": "1.0.0",
+  "description": "Top-down movement system with WASD/arrow key controls. Includes movement, collision handling, and directional facing for top-down games.",
+  "dragonruby_version": ">= 3.0",
+  "dependencies": {},
+  "scripts": [],
+  "tags": ["top-down", "movement", "controls", "gameplay"],
+  "author": "DragonRuby Forge"
+}

@@ -1,0 +1,7 @@
+<turbo-frame id="file-content">
+  <div class="code-header">
+    <span class="filename"><%= @file_path %></span>
+    <span class="language"><%= @language.titleize %></span>
+  </div>
+  <pre class="code-content" id="code-content"><code><%= raw highlight_code(@content, @language) %></code></pre>
+</turbo-frame>

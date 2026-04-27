@@ -1,0 +1,16 @@
+{
+  "name": "starter_kit",
+  "version": "1.0.0",
+  "description": "Everything you need to start building a DragonRuby game. Includes LDTK level parsing, platformer movement, health/combat, animations, and save data.",
+  "dragonruby_version": ">= 3.0",
+  "dependencies": {
+    "ldtk_parser": ">= 1.0.0",
+    "platformer_movement": ">= 1.0.0",
+    "health": ">= 1.0.0",
+    "effects": ">= 1.0.0",
+    "gameplay": ">= 1.0.0"
+  },
+  "scripts": [],
+  "tags": ["starter", "meta", "starter-kit", "essentials"],
+  "author": "DragonRuby Forge"
+}

@@ -1,0 +1,399 @@
+<% content_for :title, "Account Settings - DragonRuby Forge" %>
+
+<div class="settings-container">
+  <h1>Account Settings</h1>
+
+  <% if flash[:notice] %>
+    <div class="alert alert-success"><%= flash[:notice] %></div>
+  <% end %>
+  <% if flash[:alert] %>
+    <div class="alert alert-error"><%= flash[:alert] %></div>
+  <% end %>
+
+  <div class="settings-grid">
+    <!-- Profile Section -->
+    <section class="settings-card">
+      <h2>Profile</h2>
+      <%= form_with model: @user, url: settings_path, method: :patch, local: true do |f| %>
+        <div class="form-group">
+          <%= f.label :username %>
+          <%= f.text_field :username, value: @user.username, placeholder: "Username" %>
+          <span class="hint">Your public username</span>
+        </div>
+
+        <div class="form-group">
+          <%= f.label :email %>
+          <%= f.email_field :email, value: @user.email, placeholder: "Email" %>
+        </div>
+
+        <div class="form-group">
+          <label>Member since</label>
+          <input type="text" value="<%= @user.created_at.strftime("%B %d, %Y") %>" disabled>
+        </div>
+
+        <%= f.submit "Update Profile", class: "btn btn-primary" %>
+      <% end %>
+    </section>
+
+    <!-- API Keys Section -->
+    <section class="settings-card">
+      <h2>API Keys</h2>
+      <p class="section-description">API keys allow you to publish packages from DragonRuby. Keep your keys secret!</p>
+
+      <% if @api_keys.any? %>
+        <div class="api-keys-list">
+          <% @api_keys.each do |key| %>
+            <div class="api-key-item">
+              <div class="api-key-info">
+                <div class="api-key-name">
+                  <span class="key-icon">🔑</span>
+                  <strong><%= key.display_name %></strong>
+                  <% if key.anonymous? %>
+                    <span class="badge badge-warning">Anonymous</span>
+                  <% end %>
+                </div>
+                <div class="api-key-meta">
+                  <span class="key-prefix">Key: <code><%= key.key_part %></code></span>
+                  <span>Downloads: <%= key.download_count %></span>
+                  <span>Publishes: <%= key.publish_count %></span>
+                  <span>Created: <%= key.created_at.strftime("%b %d, %Y") %></span>
+                </div>
+              </div>
+              <div class="api-key-actions">
+                <button class="btn btn-small btn-copy" data-key="<%= key.key %>">
+                  Copy
+                </button>
+                <% unless key.anonymous? %>
+                  <%= button_to "Regenerate", regenerate_key_path(key), method: :post,
+                        class: "btn btn-small btn-secondary",
+                        data: { confirm: "This will invalidate the current key. Continue?" } %>
+                  <%= button_to "Delete", destroy_key_path(key), method: :delete,
+                        class: "btn btn-small btn-danger",
+                        data: { confirm: "Delete this API key? This cannot be undone." } %>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <p class="no-keys">No API keys yet. Create one below or claim an existing key.</p>
+      <% end %>
+
+      <!-- Create New Key -->
+      <div class="create-key-form">
+        <h3>Create New Key</h3>
+        <%= form_with url: create_key_path, method: :post, local: true do %>
+          <div class="form-row">
+            <input type="text" name="name" placeholder="Key name (e.g., 'My Game')">
+            <%= submit_tag "Create Key", class: "btn btn-primary" %>
+          </div>
+        <% end %>
+      </div>
+    </section>
+
+    <!-- Claim Anonymous Key -->
+    <section class="settings-card">
+      <h2>Claim Anonymous Key</h2>
+      <p class="section-description">
+        If you downloaded a project before creating an account, you can claim that anonymous key here.
+        This will link it to your account and enable publishing.
+      </p>
+
+      <%= form_with url: claim_key_path, method: :post, local: true do %>
+        <div class="form-row">
+          <input type="text" name="key_string" placeholder="Paste your anonymous API key">
+          <%= submit_tag "Claim Key", class: "btn btn-secondary" %>
+        </div>
+      <% end %>
+
+      <div class="claim-info">
+        <h4>How to find your key:</h4>
+        <ol>
+          <li>Open your game project</li>
+          <li>Open the file <code>forge/api_key.rb</code></li>
+          <li>Copy the entire API key string</li>
+          <li>Paste it above and click "Claim Key"</li>
+        </ol>
+      </div>
+    </section>
+  </div>
+</div>
+
+<style>
+  .settings-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  .settings-container h1 {
+    font-size: 1.75rem;
+    color: #1a1a2e;
+    margin-bottom: 1.5rem;
+  }
+
+  .settings-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .settings-card {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 1.5rem;
+  }
+
+  .settings-card h2 {
+    font-size: 1.25rem;
+    color: #1a1a2e;
+    margin: 0 0 0.5rem 0;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  .settings-card h3 {
+    font-size: 1rem;
+    color: #333;
+    margin: 1.5rem 0 0.75rem;
+  }
+
+  .section-description {
+    color: #666;
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .form-group label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #333;
+  }
+
+  .form-group input {
+    padding: 0.75rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: inherit;
+  }
+
+  .form-group input:focus {
+    outline: none;
+    border-color: #4a90d9;
+  }
+
+  .form-group input:disabled {
+    background: #f5f5f5;
+    color: #666;
+  }
+
+  .hint {
+    font-size: 0.75rem;
+    color: #888;
+  }
+
+  .form-row {
+    display: flex;
+    gap: 0.75rem;
+    align-items: stretch;
+  }
+
+  .form-row input {
+    flex: 1;
+    padding: 0.75rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1rem;
+  }
+
+  /* API Keys */
+  .api-keys-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .api-key-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 1rem;
+    background: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+  }
+
+  .api-key-info {
+    flex: 1;
+  }
+
+  .api-key-name {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .key-icon {
+    font-size: 1rem;
+  }
+
+  .api-key-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    font-size: 0.8125rem;
+    color: #666;
+  }
+
+  .api-key-meta code {
+    background: #e8e8e8;
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+  }
+
+  .api-key-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
+  }
+
+  .badge {
+    font-size: 0.6875rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+
+  .badge-warning {
+    background: #fff3cd;
+    color: #856404;
+  }
+
+  .no-keys {
+    color: #888;
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+  }
+
+  .create-key-form {
+    border-top: 1px solid #f0f0f0;
+    padding-top: 1rem;
+  }
+
+  /* Claim section */
+  .claim-info {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: #f0f7ff;
+    border-radius: 8px;
+    font-size: 0.875rem;
+  }
+
+  .claim-info h4 {
+    margin: 0 0 0.5rem;
+    color: #1a1a2e;
+  }
+
+  .claim-info ol {
+    margin: 0.5rem 0 0;
+    padding-left: 1.5rem;
+    color: #555;
+  }
+
+  .claim-info code {
+    background: #e8f4fd;
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.8125rem;
+  }
+
+  /* Buttons */
+  .btn {
+    padding: 0.75rem 1.25rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  .btn-primary {
+    background: #4a90d9;
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background: #357abd;
+  }
+
+  .btn-secondary {
+    background: #f5f5f5;
+    color: #333;
+  }
+
+  .btn-secondary:hover {
+    background: #e8e8e8;
+  }
+
+  .btn-danger {
+    background: #fef2f2;
+    color: #dc2626;
+  }
+
+  .btn-danger:hover {
+    background: #fee2e2;
+  }
+
+  .btn-small {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.8125rem;
+  }
+
+  .alert {
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    font-size: 0.875rem;
+  }
+
+  .alert-success {
+    background: #f0fdf4;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+  }
+
+  .alert-error {
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+  }
+</style>
+
+<script>
+  // Copy API key functionality
+  document.querySelectorAll('.btn-copy').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key = btn.dataset.key;
+      navigator.clipboard.writeText(key).then(() => {
+        const original = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = original, 1500);
+      });
+    });
+  });
+</script>

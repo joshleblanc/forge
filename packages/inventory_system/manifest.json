@@ -1,0 +1,12 @@
+{
+  "name": "inventory_system",
+  "version": "1.0.0",
+  "description": "Complete inventory system with stacking, save/load, and shop support. Combines inventory management, item specifications, and quest rewards.",
+  "dragonruby_version": ">= 3.0",
+  "dependencies": {
+    "gameplay": ">= 1.0.0"
+  },
+  "scripts": [],
+  "tags": ["inventory", "items", "shop", "gameplay", "rpg"],
+  "author": "DragonRuby Forge"
+}

@@ -1,0 +1,11 @@
+{
+  "name": "ui_components",
+  "version": "1.0.0",
+  "description": "Reusable UI widgets for DragonRuby: NotificationWidget, ProgressBarWidget, ConfirmationWidget. Provides toast notifications, progress bars, and yes/no dialogs.",
+  "dragonruby_version": ">= 3.0",
+  "dependencies": {},
+  "scripts": ["NotificationsScript", "ProgressBarScript", "ConfirmationScript"],
+  "widgets": ["NotificationWidget", "ProgressBarWidget", "ConfirmationWidget"],
+  "tags": ["ui", "widgets", "notifications", "progress-bar", "dialog"],
+  "author": "DragonRuby Forge"
+}
