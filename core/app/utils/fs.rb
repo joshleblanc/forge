@@ -12,7 +12,6 @@
 #   Forge::Fs.mkdir_p("packages/health/scripts")  # no-op (write_file auto-creates)
 #   Forge::Fs.rm_rf("packages/health")
 #   Forge::Fs.list_recursive("packages/health")
-#   Forge::Fs.list_recursive("packages/health", glob: "**/*.rb")
 
 module Forge
   module Fs
@@ -66,22 +65,12 @@ module Forge
       end
 
       # Recursively list every regular file under a directory. Returns paths
-      # relative to `dir` (forward slashes). Optional `glob:` filters
-      # results — supports `**`, `*`, `?`.
-      def list_recursive(dir, glob: nil)
+      # relative to `dir`, with forward slashes.
+      def list_recursive(dir)
         return [] unless directory?(dir)
         results = []
         walk(dir, "", results)
-        if glob
-          re = glob_to_regex(glob)
-          results.select! { |rel| !!(rel =~ re) }
-        end
         results
-      end
-
-      # Project-aware Dir.glob replacement: returns full paths joined with `dir`.
-      def glob(dir, pattern)
-        list_recursive(dir, glob: pattern).map { |rel| File.join(dir, rel) }
       end
 
       private
@@ -99,35 +88,6 @@ module Forge
         end
       end
 
-      # Convert a small subset of glob syntax to a Regexp.
-      #   **   →  .*
-      #   *    →  [^/]*
-      #   ?    →  [^/]
-      def glob_to_regex(pattern)
-        re = +""
-        i = 0
-        while i < pattern.length
-          c = pattern[i]
-          if c == "*" && pattern[i + 1] == "*"
-            re << ".*"
-            i += 2
-            i += 1 if pattern[i] == "/"
-          elsif c == "*"
-            re << "[^/]*"
-            i += 1
-          elsif c == "?"
-            re << "[^/]"
-            i += 1
-          elsif "().[]+^$|\\".include?(c)
-            re << "\\" << c
-            i += 1
-          else
-            re << c
-            i += 1
-          end
-        end
-        Regexp.new("\\A" + re + "\\z")
-      end
     end
   end
 end

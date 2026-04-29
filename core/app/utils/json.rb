@@ -48,20 +48,27 @@ module Forge
       end
 
       def encode_string(str)
-        escaped = str.to_s.gsub(/[\\"\b\f\n\r\t\x00-\x1F]/) do |ch|
+        out = String.new("\"")
+        str.to_s.each_char do |ch|
           case ch
-          when "\\" then '\\\\'
-          when '"'  then '\\"'
-          when "\b" then '\\b'
-          when "\f" then '\\f'
-          when "\n" then '\\n'
-          when "\r" then '\\r'
-          when "\t" then '\\t'
+          when "\\" then out << '\\\\'
+          when '"'  then out << '\\"'
+          when "\b" then out << '\\b'
+          when "\f" then out << '\\f'
+          when "\n" then out << '\\n'
+          when "\r" then out << '\\r'
+          when "\t" then out << '\\t'
           else
-            format('\\u%04x', ch.ord)
+            b = ch.bytes.first
+            if b && b < 0x20
+              out << format('\\u%04x', b)
+            else
+              out << ch
+            end
           end
         end
-        %("#{escaped}")
+        out << "\""
+        out
       end
 
       def encode_array(arr, indent:, level:)

@@ -93,7 +93,71 @@ module Forge
       end
     end
 
+    # Files/directories (relative to project root) that `update_forge` must
+    # NOT overwrite. These contain per-project state: credentials, game code,
+    # installed packages, DragonRuby metadata, and the project README.
+    UPDATE_FORGE_PRESERVE = [
+      "api_key.rb",
+      "app/main.rb",
+      "metadata/",
+      "README.md",
+      "packages.lock.json",
+      "packages/"
+    ].freeze
+
     class << self
+      # Download the latest Forge base library and extract it over the
+      # current project, leaving per-project files untouched.
+      #
+      #   Forge.update_forge do |op|
+      #     op.failed? ? puts(op.error.message) : puts("Updated.")
+      #   end
+      #
+      # Safe to call repeatedly. Does NOT touch:
+      #   - api_key.rb        (your credentials)
+      #   - app/main.rb       (your game entry point)
+      #   - metadata/         (DragonRuby project metadata)
+      #   - README.md         (project readme)
+      #   - packages/         (installed packages)
+      #   - packages.lock.json
+      def update_forge(&block)
+        op = Op.new(&block)
+        log "Fetching latest Forge library from #{api_url_for('/forge/library')}"
+
+        Forge::Http.get(api_url_for("/forge/library"), headers: json_accept_headers).on_complete do |res|
+          if !res.success?
+            op.fail(Error.new("Forge library download failed (#{res.code}): #{res.body}"))
+            next
+          end
+
+          begin
+            count     = 0
+            skipped   = 0
+            ZipReader.open(res.body) do |zip|
+              zip.each do |entry|
+                next if entry.name.include?("..") || entry.name.end_with?("/")
+
+                if preserve?(entry.name)
+                  skipped += 1
+                  next
+                end
+
+                Forge::Fs.mkdir_p(File.dirname(entry.name))
+                Forge::Fs.write(entry.name, entry.read)
+                count += 1
+              end
+            end
+
+            log "Forge library updated. #{count} file(s) written, #{skipped} preserved."
+            op.fulfill_result(updated: count, preserved: skipped)
+          rescue => e
+            op.fail(Error.new("Forge library extract failed: #{e.message}"))
+          end
+        end
+
+        op
+      end
+
       # Install a package by name.
       #
       #   Forge.add_package("health-system")
@@ -385,9 +449,22 @@ module Forge
       end
 
       # Minimal URL-encoder used for query strings (URI.encode_www_form_component
-      # is unavailable in DragonRuby's mruby).
+      # is unavailable in DragonRuby's mruby, and mruby has no Regexp class at
+      # all — so we walk bytes by hand).
       def url_encode(str)
-        str.to_s.gsub(/[^A-Za-z0-9\-._~]/) { |c| c.bytes.map { |b| format("%%%02X", b) }.join }
+        out = ""
+        str.to_s.each_char do |c|
+          b = c.bytes.first
+          if (b >= 48 && b <= 57)  || # 0-9
+             (b >= 65 && b <= 90)  || # A-Z
+             (b >= 97 && b <= 122) || # a-z
+             b == 45 || b == 46 || b == 95 || b == 126 # - . _ ~
+            out << c
+          else
+            c.bytes.each { |byte| out << format("%%%02X", byte) }
+          end
+        end
+        out
       end
 
       def fetch_package_manifest(name, version = nil, &block)
@@ -463,9 +540,9 @@ module Forge
           Forge::JSON.pretty(manifest.merge("installed_version" => version))
         )
 
-        resolver = PathResolver.new(name)
-
-        # Extract zip (the download endpoint serves a plain ZIP archive)
+        # Extract zip verbatim. Any rewriting of require_relative or asset
+        # paths happens server-side at package publish time — the client just
+        # writes bytes to disk.
         ZipReader.open(zip_data) do |zip|
           zip.each do |entry|
             next if entry.name.include?("..") # Security: prevent path traversal
@@ -479,16 +556,7 @@ module Forge
 
             target_path = File.join(package_dir, relative_path)
             Forge::Fs.mkdir_p(File.dirname(target_path))
-
-            content = entry.read
-
-            # Rewrite path references in Ruby files
-            if target_path.end_with?(".rb")
-              file_type = infer_file_type(relative_path)
-              content = resolver.resolve_content(content, file_type: file_type)
-            end
-
-            Forge::Fs.write(target_path, content)
+            Forge::Fs.write(target_path, entry.read)
           end
         end
 
@@ -504,12 +572,9 @@ module Forge
       # @param path [String] relative path within package
       # @return [Symbol] :script, :widget, :lib
       def infer_file_type(path)
-        case path
-        when /\Ascripts\// then :script
-        when /\Awidgets\// then :widget
-        when /\Alib\// then :lib
-        else :lib
-        end
+        return :script if path.start_with?("scripts/")
+        return :widget if path.start_with?("widgets/")
+        :lib
       end
 
       def register_package(name, version, manifest)
@@ -557,12 +622,37 @@ module Forge
         Forge::Fs.write(lock_path, Forge::JSON.pretty(lock))
       end
 
+      # Lowercase, whitespace runs collapsed to "-", strip anything that's not
+      # [a-z0-9_-]. Written without regex because DragonRuby's mruby has no
+      # Regexp class.
       def normalize_name(name)
-        name.downcase.gsub(/\s+/, "-").gsub(/[^\w-]/, "")
+        out = ""
+        prev_dash = false
+        name.to_s.downcase.each_char do |c|
+          b = c.bytes.first
+          if b == 32 || b == 9 || b == 10 || b == 13 # whitespace
+            unless prev_dash
+              out << "-"
+              prev_dash = true
+            end
+          elsif (b >= 97 && b <= 122) || (b >= 48 && b <= 57) || b == 95 || b == 45
+            out << c
+            prev_dash = (c == "-")
+          end
+        end
+        out
       end
 
       def log(msg)
         puts "[Forge] #{msg}"
+      end
+
+      # True if `path` (relative to project root) is on the preserve-list for
+      # `update_forge`. Directory entries end with `/` in UPDATE_FORGE_PRESERVE.
+      def preserve?(path)
+        UPDATE_FORGE_PRESERVE.any? do |p|
+          p.end_with?("/") ? path.start_with?(p) : path == p
+        end
       end
 
       # Compare two semver version strings. Returns true if a > b.
@@ -697,6 +787,11 @@ module Forge
 
   # Convenience methods at Forge module level
   class << self
+    # Update the Forge base library in place. See PackageManager.update_forge.
+    def update_forge(&block)
+      PackageManager.update_forge(&block)
+    end
+
     def add_package(name, version: nil, &block)
       PackageManager.add_package(name, version: version, &block)
     end

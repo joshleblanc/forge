@@ -30,6 +30,9 @@ Rails.application.routes.draw do
     post "packages/:id/versions/:version/upload", to: "packages#upload", constraints: { version: /[^\/]+/ }
     delete "packages/:id/versions/:version/file", to: "packages#delete_file", constraints: { version: /[^\/]+/ }
     get "packages/:id/storage_info" => "packages#storage_info"
+
+    # Forge base library (STORED zip, used by Forge.update_forge)
+    get "forge/library" => "forge#library"
   end
 
   # Package routes - publish before resources to avoid conflict

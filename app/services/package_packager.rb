@@ -4,6 +4,11 @@ require "zip"
 require "json"
 require "stringio"
 
+# DragonRuby's pure-Ruby ZipReader only supports classic 32-bit ZIP headers.
+# rubyzip 3.x defaults to emitting ZIP64 extra fields for streamed entries,
+# which blows up the client. Disable ZIP64 — all our archives are < 4 GB.
+Zip.write_zip64_support = false
+
 # Builds a ZIP archive from an on-disk package directory (packages/<name>/)
 # and/or from a version's DB metadata, and attaches it to a PackageVersion
 # via ActiveStorage through PackageStorageService.
@@ -110,9 +115,29 @@ class PackagePackager
         next if basename.start_with?(".")
 
         rel = Pathname.new(path).relative_path_from(Pathname.new(source_dir)).to_s
+        bytes = File.binread(path)
+        bytes = rewrite_lib_requires(bytes) if dir == "lib" && rel.end_with?(".rb")
+
         zos.put_next_entry(rel, "", Zip::ExtraField.new, Zip::Entry::STORED)
-        zos.write(File.binread(path))
+        zos.write(bytes)
       end
+    end
+  end
+
+  # Inside lib/*.rb, rewrite `require_relative "scripts/foo"` and
+  # `require_relative "widgets/foo"` to reach sibling directories via `../`.
+  # Once installed, the file lives at `packages/<pkg>/lib/<name>.rb` and the
+  # target at `packages/<pkg>/scripts/foo.rb`, so `../scripts/foo` resolves
+  # correctly. Leaves other paths untouched (including require_relative
+  # "phys/velocity" which naturally resolves to lib/phys/velocity.rb).
+  def rewrite_lib_requires(source)
+    source.gsub(
+      /require_relative\s+(['"])(scripts|widgets|assets|samples)\/([^'"]+)\1/
+    ) do
+      quote = Regexp.last_match(1)
+      dir   = Regexp.last_match(2)
+      tail  = Regexp.last_match(3)
+      "require_relative #{quote}../#{dir}/#{tail}#{quote}"
     end
   end
 end

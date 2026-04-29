@@ -43,6 +43,7 @@ class ForgeController < ApplicationController
 
   def generate_forge_zip(api_key)
     require "zip"
+    Zip.write_zip64_support = false # DragonRuby ZipReader only parses classic 32-bit headers.
 
     buffer = StringIO.new
     Zip::OutputStream.write_buffer(buffer) do |zip|
