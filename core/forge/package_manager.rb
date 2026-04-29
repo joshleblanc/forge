@@ -98,7 +98,7 @@ module Forge
     # installed packages, DragonRuby metadata, and the project README.
     UPDATE_FORGE_PRESERVE = [
       "api_key.rb",
-      "app/main.rb",
+      "app/",
       "metadata/",
       "README.md",
       "packages.lock.json",

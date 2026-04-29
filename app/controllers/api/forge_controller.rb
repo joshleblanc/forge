@@ -7,9 +7,11 @@ class Api::ForgeController < ApplicationController
   # per-project files so it can be unzipped over an existing project without
   # clobbering the user's state. Excluded:
   #   - api_key.rb / api_key.rb.example  (user's credentials)
-  #   - app/main.rb                      (user's game entry point)
-  #   - metadata/*                       (DragonRuby project metadata)
+  #   - app/**                           (user's game code)
+  #   - metadata/**                      (DragonRuby project metadata)
   #   - README.md                        (project readme)
+  #
+  # The library ships `forge/**` + top-level `Gemfile` / `.gitignore`.
   #
   # Used by the in-game `Forge.update_forge` helper.
   def library
@@ -46,8 +48,10 @@ class Api::ForgeController < ApplicationController
   EXCLUDED_PREFIXES = [
     "api_key.rb",
     "api_key.rb.example",
-    "app/main.rb",
+    "app/",
     "metadata/",
+    "packages/",
+    "packages.lock.json",
     "README.md"
   ].freeze
 

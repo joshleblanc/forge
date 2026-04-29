@@ -6,7 +6,7 @@
 # Usage:
 #
 #   # Basic: create an entity and run the loop
-#   require "packages"
+#   require "forge/packages"
 #
 #   class Player < Forge::Entity
 #   end
@@ -16,7 +16,7 @@
 #   end
 #
 #   # Advanced: configure Forge, add packages
-#   require "packages"
+#   require "forge/packages"
 #
 #   Forge.configure do |config|
 #     config.game_class = MyGame
@@ -48,7 +48,7 @@
 #   )
 
 # Load Forge base + package manager + all installed packages
-require "packages"
+require "forge/packages"
 
 # Initialize Forge
 Forge.configure do |config|

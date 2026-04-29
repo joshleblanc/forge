@@ -105,7 +105,7 @@ class ForgeController < ApplicationController
 
         ## Add packages
 
-        Open `packages.rb` and add packages, e.g.:
+        From your game's tick (first frame only) or the DragonRuby console:
 
             Forge.add_package("starter_kit")
             Forge.add_package("health")
@@ -113,12 +113,22 @@ class ForgeController < ApplicationController
 
         Browse the registry: <https://forge.game>
 
-        ## Customize
+        ## Project layout
 
-        - **`app/main.rb`** — your `tick` entry point. Configure your `Game` class here.
-        - **`packages.rb`** — declares which packages your game uses (auto-managed).
+        - **`app/`** — **your game code**. `app/main.rb` is the DragonRuby entry point.
+        - **`forge/`** — the Forge base library. Do not edit; update with `Forge.update_forge`.
         - **`packages/`** — installed package source (auto-managed; commit it for reproducible builds).
+        - **`packages.lock.json`** — records which packages are installed (auto-managed).
         - **`api_key.rb`** — your Forge API key (do **not** commit; already in `.gitignore`).
+
+        ## Update the Forge library
+
+        From your game, call:
+
+            Forge.update_forge
+
+        This refreshes everything under `forge/` in place, leaving `app/`, `packages/`,
+        `api_key.rb`, and DragonRuby metadata untouched. Restart DragonRuby after.
 
         ## Publish your own packages
 

@@ -1,7 +1,11 @@
-# packages.rb — bootstrap for a Forge-powered DragonRuby project.
+# forge/packages.rb — bootstrap for a Forge-powered DragonRuby project.
 #
-# This file loads the Forge base library, the package manager, and every
-# package listed in `packages.lock.json`. Add or remove packages with:
+# Require this from your `app/main.rb`:
+#
+#   require "forge/packages"
+#
+# It loads the Forge base library, the package manager, and every package
+# listed in `packages.lock.json`. Add or remove packages with:
 #
 #   Forge.add_package("package-name")
 #   Forge.remove_package("package-name")
@@ -10,13 +14,13 @@
 
 # Load the Forge base library (Entity, Process, Game, Camera, UI, Forge::Fs,
 # Forge::JSON, Forge::Http, ...).
-require_relative "app/forge"
+require_relative "forge"
 
 # Package manager (Forge.add_package, ZipReader, publish, ...).
-require_relative "app/package_manager"
+require_relative "package_manager"
 
 # Path resolver utility used by the package manager when extracting archives.
-require_relative "app/utils/path_resolver"
+require_relative "utils/path_resolver"
 
 # Load every installed package described by packages.lock.json.
 # Paths are project-relative; on DragonRuby GTK.read_file resolves them to the
