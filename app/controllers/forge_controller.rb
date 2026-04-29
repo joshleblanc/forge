@@ -22,8 +22,10 @@ class ForgeController < ApplicationController
       # This supports re-downloading with the same key (e.g., if user loses their zip)
     else
       # Completely anonymous: create anonymous user and API key
+      # Use a random password to satisfy has_secure_password (it's never used)
       anonymous_user = User.find_or_create_by!(anonymous: true) do |u|
         u.username = "anonymous_#{SecureRandom.hex(4)}"
+        u.password = SecureRandom.hex(16)
       end
       @api_key = anonymous_user.api_keys.create!(
         name: "Project #{Time.current.strftime('%Y-%m-%d %H:%M')}"
