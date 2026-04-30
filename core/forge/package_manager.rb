@@ -422,6 +422,136 @@ module Forge
         op
       end
 
+      # Add a file to a local package (for building packages locally).
+      # The file is copied from your project into the package structure.
+      #
+      #   Forge.add_file("my_package", "app/scripts/player_controller.rb")
+      #
+      # If the package doesn't exist locally, it creates the package structure.
+      # Only files you own can be modified (enforced on publish).
+      def add_file(package_name, source_path)
+        package_name = normalize_name(package_name)
+        source_path = source_path.to_s.strip
+
+        raise Error, "Source path cannot be empty" if source_path.empty?
+        raise Error, "Source path cannot contain '..' (path traversal not allowed)" if source_path.include?("..")
+
+        unless Forge::Fs.exists?(source_path)
+          raise Error, "Source file not found: #{source_path}"
+        end
+
+        package_dir = create_package_dir(package_name)
+        target_path = File.join(package_dir, source_path)
+
+        # Read source and write to package
+        content = Forge::Fs.read(source_path)
+        Forge::Fs.mkdir_p(File.dirname(target_path))
+        Forge::Fs.write(target_path, content)
+
+        # Update local manifest with this file
+        manifest = get_local_manifest(package_name)
+        manifest["files"] ||= []
+        unless manifest["files"].include?(source_path)
+          manifest["files"] << source_path
+        end
+        save_local_manifest(package_name, manifest)
+
+        log "Added #{source_path} to #{package_name}"
+        { package: package_name, file: source_path, action: "added" }
+      end
+
+      # Remove a file from a local package.
+      #
+      #   Forge.remove_file("my_package", "app/scripts/player_controller.rb")
+      #
+      def remove_file(package_name, file_path)
+        package_name = normalize_name(package_name)
+        file_path = file_path.to_s.strip
+
+        package_dir = create_package_dir(package_name)
+        target_path = File.join(package_dir, file_path)
+
+        unless Forge::Fs.exists?(target_path)
+          raise Error, "File not found in package: #{file_path}"
+        end
+
+        # Delete the file
+        Forge::Fs.rm_rf(target_path)
+
+        # Update manifest
+        manifest = get_local_manifest(package_name)
+        manifest["files"] ||= []
+        manifest["files"] = manifest["files"].reject { |f| f == file_path }
+        save_local_manifest(package_name, manifest)
+
+        log "Removed #{file_path} from #{package_name}"
+        { package: package_name, file: file_path, action: "removed" }
+      end
+
+      # List all files in a local package.
+      #
+      #   Forge.list_package_files("my_package")
+      #   # => ["app/scripts/player_controller.rb", "app/widgets/health_bar.rb"]
+      #
+      def list_package_files(package_name)
+        package_name = normalize_name(package_name)
+        manifest = get_local_manifest(package_name)
+        manifest["files"] || []
+      end
+
+      # Preview what a local package contains (manifest + files).
+      #
+      #   Forge.preview_package("my_package")
+      #   # => { name: "my_package", files: [...], manifest: {...} }
+      #
+      def preview_package(package_name)
+        package_name = normalize_name(package_name)
+        manifest = get_local_manifest(package_name)
+        files = manifest["files"] || []
+
+        # Gather file contents for preview
+        file_contents = {}
+        files.each do |file_path|
+          full_path = File.join(create_package_dir(package_name), file_path)
+          if Forge::Fs.exists?(full_path)
+            file_contents[file_path] = Forge::Fs.read(full_path)
+          end
+        end
+
+        {
+          name: package_name,
+          files: files,
+          file_count: files.length,
+          file_contents: file_contents,
+          manifest: manifest
+        }
+      end
+
+      # Check if a package exists locally (created via add_file).
+      #
+      #   Forge.local_package?("my_package")
+      #   # => true or false
+      #
+      def local_package?(package_name)
+        package_name = normalize_name(package_name)
+        Forge::Fs.exists?(local_package_manifest_path(package_name))
+      end
+
+      # List all local packages (packages you've created locally).
+      #
+      #   Forge.list_local_packages
+      #   # => ["my_package", "another_package"]
+      #
+      def list_local_packages
+        packages_dir = "packages"
+        return [] unless Forge::Fs.directory?(packages_dir)
+
+        Forge::Fs.list_files(packages_dir).map do |name|
+          manifest_path = File.join(packages_dir, name, "manifest.json")
+          Forge::Fs.exists?(manifest_path) ? name : nil
+        end.compact
+      end
+
       private
 
       def api_key
@@ -586,6 +716,7 @@ module Forge
         }
 
         write_lock(lock)
+        log "Registered #{name}@#{version} in packages.lock.json"
       end
 
       def package_path(name)
@@ -645,6 +776,49 @@ module Forge
 
       def log(msg)
         puts "[Forge] #{msg}"
+      end
+
+      # Create the package directory structure if it doesn't exist.
+      def create_package_dir(package_name)
+        package_dir = File.join("packages", package_name)
+        Forge::Fs.mkdir_p(package_dir)
+        package_dir
+      end
+
+      # Get the path to a local package's manifest.
+      def local_package_manifest_path(package_name)
+        File.join("packages", package_name, "manifest.json")
+      end
+
+      # Get the local manifest for a package (or default if none exists).
+      def get_local_manifest(package_name)
+        manifest_path = local_package_manifest_path(package_name)
+        if Forge::Fs.exists?(manifest_path)
+          Forge::JSON.parse(Forge::Fs.read(manifest_path)) || default_local_manifest(package_name)
+        else
+          default_local_manifest(package_name)
+        end
+      end
+
+      # Save the local manifest for a package.
+      def save_local_manifest(package_name, manifest)
+        manifest_path = local_package_manifest_path(package_name)
+        Forge::Fs.write(manifest_path, Forge::JSON.pretty(manifest))
+      end
+
+      # Default manifest structure for a new local package.
+      def default_local_manifest(package_name)
+        {
+          "name" => package_name,
+          "version" => "0.0.1",
+          "description" => "",
+          "dragonruby_version" => ">= 3.0",
+          "files" => [],
+          "scripts" => [],
+          "widgets" => [],
+          "tags" => [],
+          "dependencies" => {}
+        }
       end
 
       # True if `path` (relative to project root) is on the preserve-list for
@@ -826,6 +1000,36 @@ module Forge
 
     def whoami(&block)
       PackageManager.whoami(&block)
+    end
+
+    # Add a file to a local package you're building.
+    def add_file(package_name, source_path)
+      PackageManager.add_file(package_name, source_path)
+    end
+
+    # Remove a file from a local package.
+    def remove_file(package_name, file_path)
+      PackageManager.remove_file(package_name, file_path)
+    end
+
+    # List files in a local package.
+    def list_package_files(package_name)
+      PackageManager.list_package_files(package_name)
+    end
+
+    # Preview a local package's contents.
+    def preview_package(package_name)
+      PackageManager.preview_package(package_name)
+    end
+
+    # Check if a package exists locally.
+    def local_package?(package_name)
+      PackageManager.local_package?(package_name)
+    end
+
+    # List all local packages.
+    def list_local_packages
+      PackageManager.list_local_packages
     end
   end
 end
